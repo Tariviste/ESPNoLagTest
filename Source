@@ -63,7 +63,7 @@ end
 
 function ESP:Add(root, options)
 	if self.Containers[root] then
-		self:Remove(root)
+		return
 	end
 
 	-- Container
