@@ -109,12 +109,19 @@ function ESP:Add(root, options)
 	outline.OutlineColor = container.Color
 	outline.OutlineTransparency = 0
 	outline.Parent = container.OutlineFocus
+	
+	if options.DeletedFunction then
+		container.RemovedFunctionInLoop = options.DeletedFunction
+	end
 
 	-- Connections
 
 	if player then
 		container.Connections.changeTeam = player:GetPropertyChangedSignal("Team"):Connect(function()
 			self:Remove(container.Root)
+			if container.RemovedFunctionInLoop then
+				container.RemovedFunctionInLoop()
+			end
 		end)
 	end
 
@@ -230,6 +237,10 @@ RS.Stepped:Connect(function()
 			end
 		else
 			ESP:Remove(root)
+			if container.RemovedFunctionInLoop then
+				container.RemovedFunctionInLoop()
+			end
+
 		end
 	end
 end)
