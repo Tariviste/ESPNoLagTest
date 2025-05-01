@@ -120,6 +120,7 @@ function ESP:Add(root, options)
 		container.Connections.changeTeam = player:GetPropertyChangedSignal("Team"):Connect(function()
 			self:Remove(container.Root)
 			if container.RemovedFunctionInLoop then
+                                print("Remove Func")
 				container.RemovedFunctionInLoop()
 			end
 		end)
@@ -238,6 +239,7 @@ RS.Stepped:Connect(function()
 		else
 			ESP:Remove(root)
 			if container.RemovedFunctionInLoop then
+                                print("Remove Func")
 				container.RemovedFunctionInLoop()
 			end
 
