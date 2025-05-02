@@ -141,6 +141,10 @@ function ESP:Remove(root)
 	local container = self.Containers[root]
 
 	if container then
+                if container.RemovedFunctionInLoop then
+                    print("Remove Func")
+		    container.RemovedFunctionInLoop()
+	        end
 		container.Active = false
 
 		for _, v in next, container.Connections do
@@ -153,6 +157,7 @@ function ESP:Remove(root)
 
 		self.Containers[root] = nil
 	end
+        
 end
 
 -- Scripts
@@ -162,7 +167,7 @@ Plr.CharacterAdded:Connect(onCharacterAdded, Char)
 
 RS.Stepped:Connect(function()
 	for root, container in next, ESP.Containers do
-		if isAlive(root) then
+		if isAlive(root) and container.Active then
 			local screenPos, onScreen = getWTVP(root.Position)
 
 			if onScreen and container.Active then
@@ -238,11 +243,6 @@ RS.Stepped:Connect(function()
 			end
 		else
 			ESP:Remove(root)
-			if container.RemovedFunctionInLoop then
-                                print("Remove Func")
-				container.RemovedFunctionInLoop()
-			end
-
 		end
 	end
 end)
