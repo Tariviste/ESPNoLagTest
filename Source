@@ -138,7 +138,6 @@ function ESP:Remove(root)
 
 	if container then
                 if container.RemovedFunctionInLoop then
-                    print("Remove Func")
 		    container.RemovedFunctionInLoop()
 	        end
 		container.Active = false
