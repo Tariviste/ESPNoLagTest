@@ -119,11 +119,32 @@ function ESP:Add(root, options)
 
 	-- Connections
 
-	container.Connections.changeParent = root.Changed:Connect(function()
-		if not root.Parent then
-			self:Remove(root)
+	local function AncestryChain(Callback)
+		local connections = {}
+
+		local current = root
+		while current and current ~= game do
+			local conn = current.AncestryChanged:Connect(function(_, parent)
+				if not parent then
+					Callback()
+				end
+			end)
+			table.insert(connections, conn)
+
+			current = current.Parent
 		end
+
+		return connections
+	end
+	
+	local AncestryCons = AncestryChain(function()
+		ESP:Remove(container.Root)
 	end)
+	
+	for _, con in pairs(AncestryCons) do
+		container.Connections[#container.Connections + 1] = con
+	end
+
 
 	-- Indexing
 
