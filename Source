@@ -10,8 +10,6 @@ local Char = Plr.Character or Plr.CharacterAdded:Wait()
 local Root = Char:WaitForChild("HumanoidRootPart")
 local Camera = workspace.CurrentCamera
 
-local WorldToViewportPoint = Camera.WorldToViewportPoint
-
 local ESP = {
 	Containers = {},
 	Settings = {
@@ -19,15 +17,20 @@ local ESP = {
 		Distance = true,
 		Health = true,
 		Tracer = true,
-		TracerFrom = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 25),
 		TracerThickness = 1,
 		Outline = true,
+        TracerFrom = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 25)
 		OutlineOpacity = 0.75,
 		OutlineOnTop = true,
 		Rainbow = false,
 		TextSize = 16,
 	},
 }
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+	Camera = workspace.CurrentCamera
+    ESP.Settings.TracerFrom = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 25)
+end)
 
 -- Misc Functions
 
@@ -44,8 +47,8 @@ local function getPlayerFromRoot(root)
 end
 
 local function getWTVP(vec3)
-	local screenPos, onScreen = WorldToViewportPoint(Camera, vec3)
-
+	local cam = workspace.CurrentCamera
+	local screenPos, onScreen = cam:WorldToViewportPoint(vec3)
 	return Vector2.new(screenPos.X, screenPos.Y), onScreen
 end
 
@@ -158,7 +161,7 @@ end
 -- Scripts
 
 onCharacterAdded(Char)
-Plr.CharacterAdded:Connect(onCharacterAdded, Char)
+Plr.CharacterAdded:Connect(onCharacterAdded)
 
 RS.Stepped:Connect(function()
 	for root, container in next, ESP.Containers do
@@ -192,7 +195,7 @@ RS.Stepped:Connect(function()
 							end
 
 						elseif v.Type == "Line" and ESP.Settings.Tracer then
-							v.Obj.From = ESP.Settings.TracerFrom
+                            v.Obj.From = ESP.Settings.TracerFrom
 							v.Obj.To = screenPos + Vector2.new(0, math.max(texts * ESP.Settings.TextSize / 2, ESP.Settings.TextSize))
 							v.Obj.Thickness = ESP.Settings.TracerThickness
 						end
