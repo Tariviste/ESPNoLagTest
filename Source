@@ -120,9 +120,6 @@ function ESP:Add(root, options)
 	-- Connections
 
 	container.Connections.changeParent = root.AncestryChanged:Connect(function(_, par)
-		if par then
-			return
-		end
 		self:Remove(container.Root)
 	end)
 
@@ -166,7 +163,12 @@ Plr.CharacterAdded:Connect(onCharacterAdded)
 
 RS.Stepped:Connect(function()
 	for root, container in next, ESP.Containers do
-		if isAlive(root) and container.Active then
+		if not isAlive(root) or not root:IsDescendantOf(workspace) then
+			ESP:Remove(root)
+			continue
+		end
+
+		if container.Active then
 			local screenPos, onScreen = getWTVP(root.Position)
 
 			if onScreen and container.Active then
