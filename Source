@@ -47,8 +47,8 @@ local function getPlayerFromRoot(root)
 end
 
 local function getWTVP(vec3)
-	local cam = workspace.CurrentCamera
-	local screenPos, onScreen = cam:WorldToViewportPoint(vec3)
+	local screenPos, onScreen = Camera:WorldToViewportPoint(vec3)
+
 	return Vector2.new(screenPos.X, screenPos.Y), onScreen
 end
 
