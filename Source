@@ -119,8 +119,10 @@ function ESP:Add(root, options)
 
 	-- Connections
 
-	container.Connections.changeParent = root.AncestryChanged:Connect(function(_, par)
-		self:Remove(container.Root)
+	container.Connections.changeParent = root.Changed:Connect(function()
+		if not root.Parent then
+			self:Remove(root)
+		end
 	end)
 
 	-- Indexing
