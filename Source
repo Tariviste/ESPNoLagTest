@@ -19,7 +19,7 @@ local ESP = {
 		Tracer = true,
 		TracerThickness = 1,
 		Outline = true,
-        TracerFrom = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 25)
+		TracerFrom = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 25),
 		OutlineOpacity = 0.75,
 		OutlineOnTop = true,
 		Rainbow = false,
@@ -29,7 +29,7 @@ local ESP = {
 
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 	Camera = workspace.CurrentCamera
-    ESP.Settings.TracerFrom = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 25)
+	ESP.Settings.TracerFrom = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 25)
 end)
 
 -- Misc Functions
@@ -112,7 +112,7 @@ function ESP:Add(root, options)
 	outline.OutlineColor = container.Color
 	outline.OutlineTransparency = 0
 	outline.Parent = container.OutlineFocus
-	
+
 	if options.DeletedFunction then
 		container.RemovedFunctionInLoop = options.DeletedFunction
 	end
@@ -140,9 +140,9 @@ function ESP:Remove(root)
 	local container = self.Containers[root]
 
 	if container then
-                if container.RemovedFunctionInLoop then
-		    container.RemovedFunctionInLoop()
-	        end
+		if container.RemovedFunctionInLoop then
+			container.RemovedFunctionInLoop()
+		end
 		container.Active = false
 
 		for _, v in next, container.Connections do
@@ -155,7 +155,7 @@ function ESP:Remove(root)
 
 		self.Containers[root] = nil
 	end
-        
+
 end
 
 -- Scripts
@@ -195,7 +195,7 @@ RS.Stepped:Connect(function()
 							end
 
 						elseif v.Type == "Line" and ESP.Settings.Tracer then
-                            v.Obj.From = ESP.Settings.TracerFrom
+							v.Obj.From = ESP.Settings.TracerFrom
 							v.Obj.To = screenPos + Vector2.new(0, math.max(texts * ESP.Settings.TextSize / 2, ESP.Settings.TextSize))
 							v.Obj.Thickness = ESP.Settings.TracerThickness
 						end
