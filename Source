@@ -119,11 +119,12 @@ function ESP:Add(root, options)
 
 	-- Connections
 
-	if player then
-		container.Connections.changeTeam = player:GetPropertyChangedSignal("Team"):Connect(function()
-			self:Remove(container.Root)
-		end)
-	end
+	container.Connections.changeParent = root.AncestryChanged:Connect(function(_, par)
+		if par then
+			return
+		end
+		self:Remove(container.Root)
+	end)
 
 	-- Indexing
 
