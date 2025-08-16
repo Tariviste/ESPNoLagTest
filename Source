@@ -62,12 +62,6 @@ local function isAlive(root)
 	return true
 end
 
-function ESP:ClearAll()
-	for root in pairs(self.Containers) do
-		self:Remove(root)
-	end
-end
-
 -- Functions
 
 function ESP:Add(root, options)
@@ -157,9 +151,8 @@ function ESP:Remove(root)
 					v:Disconnect()
 				end)
 			end
+            v = nil
 		end
-		table.clear(container.Connections)
-
 
 		for i, v in ipairs(container.Draw) do
 			if v.Type == "Outline" and typeof(v.Obj) == "Instance" then
@@ -167,7 +160,7 @@ function ESP:Remove(root)
 			elseif typeof(v.Obj) == "table" and v.Obj.Remove then
 				v.Obj:Remove()
 			end
-			container.Draw[i] = nil
+			v = nil
 		end
 
 
