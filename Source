@@ -145,24 +145,13 @@ function ESP:Remove(root)
 		end
 		container.Active = false
 
-		for _, v in pairs(container.Connections) do
-			if v and typeof(v) == "RBXScriptConnection" then
-				pcall(function()
-					v:Disconnect()
-				end)
-			end
-            v = nil
+		for _, v in next, container.Connections do
+			v:Disconnect(); v = nil
 		end
 
-		for i, v in ipairs(container.Draw) do
-			if v.Type == "Outline" and typeof(v.Obj) == "Instance" then
-				v.Obj:Destroy()
-			elseif typeof(v.Obj) == "table" and v.Obj.Remove then
-				v.Obj:Remove()
-			end
-			v = nil
+		for _, v in next, container.Draw do
+			v.Obj[v.Type == "Outline" and "Destroy" or "Remove"](v.Obj); v = nil
 		end
-
 
 		self.Containers[root] = nil
 	end
@@ -176,7 +165,7 @@ Plr.CharacterAdded:Connect(onCharacterAdded)
 
 RS.Stepped:Connect(function()
 	for root, container in next, ESP.Containers do
-		if not isAlive(root) then
+		if not isAlive(root) or not root.Parent then
 			ESP:Remove(root)
 			continue
 		end
