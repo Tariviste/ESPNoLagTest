@@ -53,7 +53,7 @@ local function getWTVP(vec3)
 end
 
 local function isAlive(root)
-	if not root.Parent then
+	if not root:IsDescendantOf(workspace) then
 		return false
 	elseif root.Parent:FindFirstChild("Humanoid") and root.Parent.Humanoid.Health <= 0 then
 		return false
@@ -136,6 +136,11 @@ function ESP:Add(root, options)
 	return container
 end
 
+function ChangeProperty(Obj, Prop, Val)
+	if Obj[Prop] == Val then return end
+	Obj[Prop] = Val
+end
+
 function ESP:Remove(root)
 	local container = self.Containers[root]
 
@@ -155,8 +160,78 @@ function ESP:Remove(root)
 
 		self.Containers[root] = nil
 	end
-
 end
+
+function ESP:UpdateContainer(container, root)
+	local ScreenPosition, OnScreen = getWTVP(root.Position)
+	if not OnScreen then
+		for _, v in next, container.Draw do
+			if v.Type ~= "Outline" then
+				ChangeProperty(v.Obj, "Visible", false)
+			end
+		end
+		return
+	end
+
+	local TextCount = 0
+	for _, v in next, container.Draw do
+		if v.Type == "Text" and v.Obj.Text ~= "" then
+			TextCount += 1
+		end
+	end
+
+	local OffsetVector = Vector2.new(0, math.max(TextCount * self.Settings.TextSize / 2, self.Settings.TextSize))
+	local TextSizeOffset = Vector2.new(0, self.Settings.TextSize)
+	local HPText, DistText = "", ""
+
+	local humanoid = root.Parent:FindFirstChild("Humanoid")
+	if self.Settings.Distance then
+		DistText = "[ " .. math.floor((root.Position - Root.Position).Magnitude) .. " ]"
+	end
+	if self.Settings.Health and humanoid then
+		local HP = math.floor(100 / humanoid.MaxHealth * humanoid.Health * 10) / 10
+		HPText = " [ " .. HP .. "% ]"
+	end
+
+	local StatsText = DistText .. HPText
+	local Color = self.Settings.Rainbow and Color3.fromHSV(tick() % 5 / 5, 1, 1) or container.Color
+
+	for i, v in next, container.Draw do
+		local obj = v.Obj
+
+		if v.Type ~= "Outline" then
+			if v.Type == "Text" then
+				ChangeProperty(obj, "Size", self.Settings.TextSize)
+				ChangeProperty(obj, "Position", ScreenPosition - TextSizeOffset * (TextCount - i))
+
+				if v.Name == "Name" then
+					ChangeProperty(obj, "Text", container.Name)
+				elseif v.Name == "Stats" then
+					ChangeProperty(obj, "Text", StatsText)
+				end
+
+			elseif v.Type == "Line" and self.Settings.Tracer then
+				ChangeProperty(obj, "From", self.Settings.TracerFrom)
+				ChangeProperty(obj, "To", ScreenPosition + OffsetVector)
+				ChangeProperty(obj, "Thickness", self.Settings.TracerThickness)
+			end
+
+			ChangeProperty(obj, "Color", Color)
+			ChangeProperty(obj, "Visible", v.Type ~= "Line" or self.Settings.Tracer)
+
+		else
+			local highlight = obj
+			local depth = Enum.HighlightDepthMode[self.Settings.OutlineOnTop and "AlwaysOnTop" or "Occluded"]
+			ChangeProperty(highlight, "FillColor", Color)
+			ChangeProperty(highlight, "OutlineColor", Color)
+			ChangeProperty(highlight, "FillTransparency", self.Settings.OutlineOpacity)
+			ChangeProperty(highlight, "DepthMode", depth)
+			ChangeProperty(highlight, "Enabled", self.Settings.Outline)
+			ChangeProperty(highlight, "Parent", container.OutlineFocus)
+		end
+	end
+end
+
 
 -- Scripts
 
@@ -165,88 +240,14 @@ Plr.CharacterAdded:Connect(onCharacterAdded)
 
 RS.Stepped:Connect(function()
 	for root, container in next, ESP.Containers do
-		if not isAlive(root) or not root.Parent then
+		if not isAlive(root) or not container.Active then
 			ESP:Remove(root)
 			continue
 		end
-		if container.Active then
-			local screenPos, onScreen = getWTVP(root.Position)
 
-			if onScreen and container.Active then
-				local texts = 0
-				for _, v in next, container.Draw do
-					if v.Type == "Text" and v.Obj.Text ~= "" then
-						texts += 1
-					end
-				end
-
-				for i, v in next, container.Draw do
-					local color = ESP.Settings.Rainbow and Color3.fromHSV(tick() % 5 / 5, 1, 1) or container.Color
-
-					if v.Type ~= "Outline" then
-						if v.Type == "Text" then
-							v.Obj.Size = ESP.Settings.TextSize
-							v.Obj.Position = screenPos - Vector2.new(0, (texts - i) * ESP.Settings.TextSize)
-
-							if v.Name == "Name" then
-								v.Obj.Text = container.Name
-
-							elseif v.Name == "Stats" then
-								local dist = ESP.Settings.Distance and "[ ".. (math.floor((root.Position - Root.Position).Magnitude)).. " ]" or ""
-								local health = ESP.Settings.Health and root.Parent:FindFirstChild("Humanoid") and " [ ".. (math.floor(100 / root.Parent.Humanoid.MaxHealth * root.Parent.Humanoid.Health * 10) / 10).. "% ]" or ""
-
-								v.Obj.Text = dist.. health
-							end
-
-						elseif v.Type == "Line" and ESP.Settings.Tracer then
-							v.Obj.From = ESP.Settings.TracerFrom
-							v.Obj.To = screenPos + Vector2.new(0, math.max(texts * ESP.Settings.TextSize / 2, ESP.Settings.TextSize))
-							v.Obj.Thickness = ESP.Settings.TracerThickness
-						end
-
-						v.Obj.Color = color
-						v.Obj.Visible = v.Type ~= "Line" or v.Type == "Line" and ESP.Settings.Tracer
-					else
-						if ESP.Settings.Outline then
-							if v.LastColor ~= color then
-								v.Obj.FillColor = color
-								v.Obj.OutlineColor = color
-								v.LastColor = color
-							end
-
-							if v.Obj.FillTransparency ~= ESP.Settings.OutlineOpacity then
-								v.Obj.FillTransparency = ESP.Settings.OutlineOpacity
-							end
-
-							local Depth = Enum.HighlightDepthMode[ESP.Settings.OutlineOnTop and "AlwaysOnTop" or "Occluded"]
-							if v.Obj.DepthMode ~= Depth then
-								v.Obj.DepthMode = Depth
-							end
-
-							if v.Obj.Enabled ~= ESP.Settings.Outline then
-								v.Obj.Enabled = ESP.Settings.Outline
-							end
-
-						end
-
-						v.Obj.Enabled = ESP.Settings.Outline
-
-						if v.Obj.Parent ~= container.OutlineFocus then
-							v.Obj.Parent = container.OutlineFocus
-						end
-					end
-				end
-			else
-				for _, v in next, container.Draw do
-					if v.Type ~= "Outline" then
-						v.Obj.Visible = false
-					end
-				end
-			end
-		else
-			ESP:Remove(root)
-		end
+		ESP:UpdateContainer(container, root)
 	end
 end)
+
 
 return ESP
