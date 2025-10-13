@@ -162,7 +162,7 @@ function ESP:Remove(root)
 	end
 end
 
-function ESP:UpdateContainer(container, root)
+function ESP:UpdateContainer(container, root)	
 	local ScreenPosition, OnScreen = getWTVP(root.Position)
 	if not OnScreen then
 		for _, v in next, container.Draw do
@@ -239,6 +239,10 @@ onCharacterAdded(Char)
 Plr.CharacterAdded:Connect(onCharacterAdded)
 
 RS.Stepped:Connect(function()
+	if not Char or not Root or not Camera then
+		return
+	end
+	
 	for root, container in next, ESP.Containers do
 		if not isAlive(root) or not container.Active then
 			ESP:Remove(root)
