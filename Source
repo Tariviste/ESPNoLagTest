@@ -191,16 +191,16 @@ function ESP:UpdateContainer(container, root)
 	local HPText, DistText = "", ""
 
 	local humanoid = root.Parent:FindFirstChild("Humanoid")
-	if self.Settings.Distance then
+	if self.Settings.Distance and not container.Settings.disableDistance then
 		DistText = "[ " .. math.floor((root.Position - Root.Position).Magnitude) .. " ]"
 	end
-	if self.Settings.Health and humanoid then
+	if self.Settings.Health and humanoid and not container.Settings.disableHealth then
 		local HP = math.floor(100 / humanoid.MaxHealth * humanoid.Health * 10) / 10
 		HPText = " [ " .. HP .. "% ]"
 	end
 
 	local StatsText = DistText .. HPText
-	local Color = self.Settings.Rainbow and Color3.fromHSV(tick() % 5 / 5, 1, 1) or container.Color
+	local Color = (self.Settings.Rainbow and not container.Settings.disableRainbow) and Color3.fromHSV(tick() % 5 / 5, 1, 1) or container.Color
 
 	for i, v in next, container.Draw do
 		local obj = v.Obj
@@ -216,7 +216,7 @@ function ESP:UpdateContainer(container, root)
 					ChangeProperty(obj, "Text", StatsText)
 				end
 
-			elseif v.Type == "Line" and self.Settings.Tracer then
+			elseif v.Type == "Line" and self.Settings.Tracer and not container.Settings.disableTracer then
 				ChangeProperty(obj, "From", self.Settings.TracerFrom)
 				ChangeProperty(obj, "To", ScreenPosition + OffsetVector)
 				ChangeProperty(obj, "Thickness", self.Settings.TracerThickness)
@@ -226,14 +226,16 @@ function ESP:UpdateContainer(container, root)
 			ChangeProperty(obj, "Visible", v.Type ~= "Line" or self.Settings.Tracer)
 
 		else
-			local highlight = obj
-			local depth = Enum.HighlightDepthMode[self.Settings.OutlineOnTop and "AlwaysOnTop" or "Occluded"]
-			ChangeProperty(highlight, "FillColor", Color)
-			ChangeProperty(highlight, "OutlineColor", Color)
-			ChangeProperty(highlight, "FillTransparency", self.Settings.OutlineOpacity)
-			ChangeProperty(highlight, "DepthMode", depth)
-			ChangeProperty(highlight, "Enabled", self.Settings.Outline)
-			ChangeProperty(highlight, "Parent", container.OutlineFocus)
+			if not container.Settings.disableOutline then
+				local highlight = obj
+				local depth = Enum.HighlightDepthMode[self.Settings.OutlineOnTop and "AlwaysOnTop" or "Occluded"]
+				ChangeProperty(highlight, "FillColor", Color)
+				ChangeProperty(highlight, "OutlineColor", Color)
+				ChangeProperty(highlight, "FillTransparency", self.Settings.OutlineOpacity)
+				ChangeProperty(highlight, "DepthMode", depth)
+				ChangeProperty(highlight, "Enabled", self.Settings.Outline)
+				ChangeProperty(highlight, "Parent", container.OutlineFocus)
+			end
 		end
 	end
 end
@@ -248,7 +250,7 @@ RS.Stepped:Connect(function()
 	if not Char or not Root or not Camera then
 		return
 	end
-	
+
 	for root, container in next, ESP.Containers do
 		if not isAlive(root) or not container.Active then
 			ESP:Remove(root)
