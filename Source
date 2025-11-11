@@ -1,3 +1,5 @@
+-- boy do i hope this works
+
 -- Services
 
 local Players = game:GetService("Players")
@@ -65,11 +67,14 @@ end
 -- Functions
 
 function ESP:Add(root, options)
-	if self.Containers[root] then
-		return
-	end
+	if self.Containers[root] then return end
 
-	-- Container
+	local settings = table.clone(self.Settings)
+	if options then
+		for k,v in pairs(options) do
+			settings[k] = v
+		end
+	end
 
 	local player = getPlayerFromRoot(root)
 
@@ -77,47 +82,55 @@ function ESP:Add(root, options)
 		Active = true,
 		Root = root,
 		Player = player,
-		Name = options.Name or (player and player[self.Settings.DisplayNames and "DisplayName" or "Name"]) or root.Name,
-		Color = options.Color or (player and player.Team and player.TeamColor.Color) or Color3.new(1, 1, 1),
+		Name = options.Name or (player and player[settings.DisplayNames and "DisplayName" or "Name"]) or root.Name,
+		Color = options.Color or (player and player.Team and player.TeamColor.Color) or Color3.new(1,1,1),
 		OutlineFocus = options.OutlineFocus or (player and player.Character) or (root.Parent and root.Parent.ClassName == "Model" and root.Parent) or root,
 		Connections = {},
 		Draw = {},
+		Settings = settings,
 	}
 
-	-- Draw
+	if not settings.disableName then
+		local nameLabel = Drawing.new("Text")
+		nameLabel.Center = true
+		nameLabel.Color = container.Color
+		nameLabel.Outline = true
+		nameLabel.Size = settings.TextSize
+		nameLabel.Text = container.Name
+		container.Draw[#container.Draw+1] = {Type="Text", Name="Name", Obj=nameLabel}
+	end
 
-	local nameLabel = Drawing.new("Text")
-	local statsLabel = Drawing.new("Text")
-	local tracer = Drawing.new("Line")
-	local outline = Instance.new("Highlight")
+	if not settings.disableDistance or not settings.disableHealth then
+		local statsLabel = Drawing.new("Text")
+		statsLabel.Center = true
+		statsLabel.Outline = true
+		statsLabel.Color = Color3.new(1,1,1)
+		statsLabel.Size = settings.TextSize
+		container.Draw[#container.Draw+1] = {Type="Text", Name="Stats", Obj=statsLabel}
+	end
 
-	nameLabel.Center = true
-	nameLabel.Color = container.Color
-	nameLabel.Outline = true
-	nameLabel.Size = self.Settings.TextSize
-	nameLabel.Text = container.Name
+	if not settings.disableTracer then
+		local tracer = Drawing.new("Line")
+		tracer.Color = container.Color
+		tracer.From = settings.TracerFrom
+		tracer.Thickness = settings.TracerThickness
+		container.Draw[#container.Draw+1] = {Type="Line", Name="Tracer", Obj=tracer}
+	end
 
-	statsLabel.Center = true
-	statsLabel.Outline = true
-	statsLabel.Color = Color3.new(1, 1, 1)
-	statsLabel.Size = self.Settings.TextSize
-
-	tracer.Color = container.Color
-	tracer.From = self.Settings.TracerFrom
-	tracer.Thickness = self.Settings.TracerThickness
-
-	outline.Enabled = false
-	outline.FillColor = container.Color
-	outline.FillTransparency = 0.75
-	outline.OutlineColor = container.Color
-	outline.OutlineTransparency = 0
-	outline.Parent = container.OutlineFocus
+	if not settings.disableOutline then
+		local outline = Instance.new("Highlight")
+		outline.Enabled = false
+		outline.FillColor = container.Color
+		outline.FillTransparency = 0.75
+		outline.OutlineColor = container.Color
+		outline.OutlineTransparency = 0
+		outline.Parent = container.OutlineFocus
+		container.Draw[#container.Draw+1] = {Type="Outline", Name="Outline", Obj=outline}
+	end
 
 	if options.DeletedFunction then
 		container.RemovedFunctionInLoop = options.DeletedFunction
 	end
-
-	-- Connections
 
 	if player then
 		container.Connections.changeTeam = player:GetPropertyChangedSignal("Team"):Connect(function()
@@ -125,14 +138,7 @@ function ESP:Add(root, options)
 		end)
 	end
 
-	-- Indexing
-
-	container.Draw[#container.Draw + 1] = { Type = "Text", Name = "Name", Obj = nameLabel }
-	container.Draw[#container.Draw + 1] = { Type = "Text", Name = "Stats", Obj = statsLabel }
-	container.Draw[#container.Draw + 1] = { Type = "Line", Name = "Tracer", Obj = tracer }
-	container.Draw[#container.Draw + 1] = { Type = "Outline", Name = "Outline", Obj = outline }
 	self.Containers[root] = container
-
 	return container
 end
 
