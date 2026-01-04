@@ -51,13 +51,24 @@ end
 local function getWTVP(vec3)
 	local screenPos, onScreen = Camera:WorldToViewportPoint(vec3)
 
+	if screenPos.X ~= screenPos.X or screenPos.Y ~= screenPos.Y or screenPos.Z ~= screenPos.Z or math.abs(screenPos.Z) == math.huge then
+		return nil, false
+	end
+
 	return Vector2.new(screenPos.X, screenPos.Y), onScreen
 end
+
 
 local function isAlive(root)
 	if not root:IsDescendantOf(workspace) then
 		return false
 	elseif root.Parent:FindFirstChild("Humanoid") and root.Parent.Humanoid.Health <= 0 then
+		return false
+	end
+
+	local pos = root.Position
+	if not pos or pos.X ~= pos.X or pos.Y ~= pos.Y or pos.Z ~= pos.Z then
+		ESP:Remove(root)
 		return false
 	end
 
@@ -170,6 +181,11 @@ end
 
 function ESP:UpdateContainer(container, root)	
 	local ScreenPosition, OnScreen = getWTVP(root.Position)
+
+	if not ScreenPosition then
+		ESP:Remove(root)
+		return
+	end
 	if not OnScreen then
 		for _, v in next, container.Draw do
 			if v.Type ~= "Outline" then
@@ -260,6 +276,5 @@ RS.Stepped:Connect(function()
 		ESP:UpdateContainer(container, root)
 	end
 end)
-
 
 return ESP
