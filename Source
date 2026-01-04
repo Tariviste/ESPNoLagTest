@@ -51,13 +51,18 @@ end
 local function getWTVP(vec3)
 	local screenPos, onScreen = Camera:WorldToViewportPoint(vec3)
 
-	if screenPos.X ~= screenPos.X or screenPos.Y ~= screenPos.Y or screenPos.Z ~= screenPos.Z or math.abs(screenPos.Z) == math.huge then
+	if not screenPos 
+		or screenPos ~= screenPos 
+		or math.abs(screenPos.Z) == math.huge then
+		return nil, false
+	end
+
+	if screenPos.X == 0 and screenPos.Y == 0 then
 		return nil, false
 	end
 
 	return Vector2.new(screenPos.X, screenPos.Y), onScreen
 end
-
 
 local function isAlive(root)
 	if not root:IsDescendantOf(workspace) then
@@ -67,7 +72,7 @@ local function isAlive(root)
 	end
 
 	local pos = root.Position
-	if not pos or pos.X ~= pos.X or pos.Y ~= pos.Y or pos.Z ~= pos.Z then
+	if not pos or pos ~= pos then
 		ESP:Remove(root)
 		return false
 	end
@@ -79,6 +84,11 @@ end
 
 function ESP:Add(root, options)
 	if self.Containers[root] then return end
+
+	if not root.Position or root.Position ~= root.Position then
+		ESP:Remove(root)
+		return
+	end
 
 	local settings = table.clone(self.Settings)
 	if options then
@@ -130,6 +140,15 @@ function ESP:Add(root, options)
 
 	if not settings.disableOutline then
 		local outline = Instance.new("Highlight")
+		if not root.Parent or not root.Parent.Parent then
+			return
+		end
+
+		if root.Parent ~= root.Parent or root.Parent.Parent ~= root.Parent.Parent then
+			ESP:Remove(root)
+			return
+		end
+
 		outline.Enabled = false
 		outline.FillColor = container.Color
 		outline.FillTransparency = 0.75
@@ -172,7 +191,12 @@ function ESP:Remove(root)
 		end
 
 		for _, v in next, container.Draw do
-			v.Obj[v.Type == "Outline" and "Destroy" or "Remove"](v.Obj); v = nil
+			if v.Type ~= "Outline" then
+				ChangeProperty(v.Obj, "Visible", false)
+			else
+				v.Obj:Destroy()
+			end
+			v = nil
 		end
 
 		self.Containers[root] = nil
@@ -180,6 +204,11 @@ function ESP:Remove(root)
 end
 
 function ESP:UpdateContainer(container, root)	
+	if not root.Position or root.Position ~= root.Position then
+		ESP:Remove(root)
+		return
+	end
+
 	local ScreenPosition, OnScreen = getWTVP(root.Position)
 
 	if not ScreenPosition then
@@ -256,7 +285,6 @@ function ESP:UpdateContainer(container, root)
 	end
 end
 
-
 -- Scripts
 
 onCharacterAdded(Char)
@@ -268,6 +296,11 @@ RS.Stepped:Connect(function()
 	end
 
 	for root, container in next, ESP.Containers do
+		if not root.Position or root.Position ~= root.Position then
+			ESP:Remove(root)
+			continue
+		end
+
 		if not isAlive(root) or not container.Active then
 			ESP:Remove(root)
 			continue
