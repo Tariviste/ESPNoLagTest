@@ -9,7 +9,6 @@ local RS = game:GetService("RunService")
 
 local Plr = Players.LocalPlayer
 local Char = Plr.Character or Plr.CharacterAdded:Wait()
-local Root = Char:WaitForChild("HumanoidRootPart")
 local Camera = workspace.CurrentCamera
 
 local ESP = {
